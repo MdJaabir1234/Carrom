@@ -16,11 +16,14 @@ body{
 }
 
 .world{
-  height: 80vw;
-  width: 80vw;
-  border: 5px solid #6e13c7;
+  height: 360px;
+  width: 360px;
+  border: 7px solid black;
   position:relative;
-  overflow: hidden;
+  /*overflow: hidden;*/
+  background-image: url('/assets/board.jpg');
+  background-size: cover;
+  overflow: visible;
 }
 
 .ball{
@@ -29,6 +32,7 @@ body{
   background: red;
   border-radius: 50%;
   position: absolute;
+  z-index: 4;
 }
 
 .ball.piece{
@@ -54,7 +58,7 @@ body{
   overflow: hidden;
   height: 100vh;
   width: 100vw;
-  z-index: -1;
+  z-index: 1;
 }
 .indicator-circle{
   height: 4px;
@@ -66,14 +70,18 @@ body{
 
 .pockets .pocket{
   position: absolute;
-  background: lightblue;
-  z-index: -1;
+  z-index: 1;
   height: 28px;
   width: 28px;
   display: grid;
   place-items: center;
+  background: #0F100F;
+background: linear-gradient(11deg, rgba(15, 16, 15, 1) 36%, rgba(97, 105, 97, 1) 100%);
 }
-
+.pocket.p2,.pocket.p3{
+  background: #0F100F;
+background: linear-gradient(185deg, rgba(15, 16, 15, 1) 53%, rgba(97, 105, 97, 1) 100%);
+}
 
 .pocket.p0{
   top:0;
@@ -102,7 +110,12 @@ body{
   border-radius: 50%;
   display:none;
   position: relative;
-  animation: dissapear 800ms linear;
+  animation: dissapear 3000ms linear;
+}
+
+.smooth-moving{
+  transition: bottom 500ms linear,left 500ms linear;
+  
 }
 
 .piece.red{
@@ -111,9 +124,43 @@ body{
 
 @keyframes dissapear{
   50%{
-    opacity:.5;
+    width: 8px;
+    height: 8px;
   }
   100%{
+    width: 0;
+    height: 0;
     opacity: 0;
   }
+}
+
+.slider{
+  width: 230px;
+  height: 29px;
+  left: 50%;
+  transform: translateX(-50%);
+  position: relative;
+  background: pink;
+  border-radius: 8px;
+  border: 2px solid black;
+  transition:100ms linear;
+  z-index: 5;
+}
+
+.slider0{
+  top:115%;
+}
+
+.slider1{
+  top:-30%;
+  opacity:0 ;
+}
+.slider .circle{
+  width: 25px;
+  height: 25px;
+  border-radius:50% ;
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  background: gray;
 }
