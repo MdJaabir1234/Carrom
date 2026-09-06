@@ -2,18 +2,21 @@ const striker=document.querySelector(".ball");
 const world=document.querySelector(".world");
 const indicator=document.querySelector(".indicator");
 const pocket=document.querySelector(".pocket.p1");
-const friction=8500;
-
-
+const friction=8700;
+let turn=0;
+let other=1;
+let isStrikerMoving=false;
+let isAllstopped=true;
 
 let touchStart={x:0,y:0};
 let touchEnd={x:0,y:0};
+let colors=["green","purple","red"];
 let elements={
   striker:{
     element:striker,
     m:400,
-    x:60,
-    y:90,
+    x:167.5,
+    y:43,
     v:0,
     vx:0,
     vy:0,
@@ -43,7 +46,7 @@ let elements={
     vy:0,
     a:0,
     r:9,
-    color:"green",
+    color:colors[0],
     hittingwall:false,
     lastTime:0,
     get d(){
@@ -67,7 +70,7 @@ let elements={
     vy:0,
     a:0,
     r:9,
-    color:"green",
+    color:colors[0],
     hittingwall:false,
     lastTime:0,
     get d(){
@@ -91,7 +94,7 @@ let elements={
     vy:0,
     a:0,
     r:9,
-    color:"green",
+    color:colors[0],
     hittingwall:false,
     lastTime:0,
     get d(){
@@ -115,7 +118,7 @@ let elements={
     vy:0,
     a:0,
     r:9,
-    color:"green",
+    color:colors[0],
     hittingwall:false,
     lastTime:0,
     get d(){
@@ -139,7 +142,7 @@ let elements={
     vy:0,
     a:0,
     r:9,
-    color:"green",
+    color:colors[0],
     hittingwall:false,
     lastTime:0,
     get d(){
@@ -163,7 +166,7 @@ let elements={
     vy:0,
     a:0,
     r:9,
-    color:"purple",
+    color:colors[1],
     hittingwall:false,
     lastTime:0,
     get d(){
@@ -180,14 +183,14 @@ let elements={
   },
   piece7:{
     m:250,
-    x:170,
+    x:190,
     y:290,
     v:0,
     vx:0,
     vy:0,
     a:0,
     r:9,
-    color:"purple",
+    color:colors[1],
     hittingwall:false,
     lastTime:0,
     get d(){
@@ -211,7 +214,7 @@ let elements={
     vy:0,
     a:0,
     r:9,
-    color:"purple",
+    color:colors[1],
     hittingwall:false,
     lastTime:0,
     get d(){
@@ -235,7 +238,7 @@ let elements={
     vy:0,
     a:0,
     r:9,
-    color:"purple",
+    color:colors[1],
     hittingwall:false,
     lastTime:0,
     get d(){
@@ -250,7 +253,7 @@ let elements={
       return (world.clientHeight - this.element.offsetHeight);
     }
   },
-  piece6:{
+  piece10:{
     m:250,
     x:69,
     y:69,
@@ -259,7 +262,7 @@ let elements={
     vy:0,
     a:0,
     r:9,
-    color:"purple",
+    color:colors[1],
     hittingwall:false,
     lastTime:0,
     get d(){
@@ -283,7 +286,7 @@ let elements={
     vy:0,
     a:0,
     r:9,
-    color:"red",
+    color:colors[2],
     hittingwall:false,
     lastTime:0,
     get d(){
@@ -299,8 +302,12 @@ let elements={
     }
   }
 }
+let piecesCount=[5,5,1];
 let pocketCornerX=world.clientHeight-pocket.clientHeight;
 let pocketCornerY=world.clientWidth-pocket.clientWidth;
+let turnMoved=true;
+let hasToCover=false;
+
 let pocketCorners=[
   {
     x:world.clientWidth-pocketCornerX,
@@ -329,11 +336,47 @@ function createPieces(){
       newPiece.classList.add("piece");
     }
     newPiece.classList.add("ball");
+    newPiece.classList.add(piecProperties[index].color);
     newPiece.style.background=piecProperties[index].color;
     elements[piece].element=newPiece;
     setPos(piece,piecProperties[index].x,piecProperties[index].y);
+
     world.appendChild(newPiece);
   });
+}
+
+function checkIfAllStopped(){
+  isAllstopped=true;
+  Object.values(elements).forEach((element,index)=>{
+    if(element && element.v!==0){
+      isAllstopped=false;
+    }
+  });
+}
+function setStriker(turn){
+  
+  if(turn==0 && elements.striker.y==43 && elements.striker.x==(360/2-elements.striker.r)){
+    return;
+  }else if(turn==1 && elements.striker.y==277 && elements.striker.x==(360/2-elements.striker.r)){
+    return;
+  }
+  /*Object.values(elements).forEach((element,index)=>{
+    if(element && element.v!==0){
+      console.log("stopped here");
+      isAllstopped=false;
+    }
+  });*/
+  if(isAllstopped==false){
+    return;
+  }
+  
+    elements.striker.element.classList.add("smooth-moving");
+    elements.striker.y=turn==0?43:277;
+    elements.striker.x=360/2-elements.striker.r;
+    setTimeout(()=>{
+      elements.striker.element.classList.remove("smooth-moving");
+    },500);
+  
 }
 
 function setPos(entity,X,Y){
@@ -344,6 +387,37 @@ function setPos(entity,X,Y){
   elements[entity].y=Y;
   elements[entity].element.style.left=X+"px";
   elements[entity].element.style.bottom=Y+"px";
+}
+
+function countPieces(){
+  let ownPiecesCount=[0,0,0];
+  Object.values(elements).forEach(element=>{
+    if(element.color==colors[0]){
+      ownPiecesCount[0]++;
+    }else if(element.color==colors[1]){
+      ownPiecesCount[1]++;
+    }if(element.color==colors[2]){
+      ownPiecesCount[2]++;
+    }
+  });
+  return ownPiecesCount;
+}
+
+function checkWin(){
+  if(piecesCount[0]==0){
+    if(piecesCount[2]==0){
+      alert(colors[0] + " won");
+    }else{
+      alert("Red is a must!");
+    }
+  }
+  if(piecesCount[1]==0){
+    if(piecesCount[2]==0){
+      alert(colors[1] + " won");
+    }else{
+      alert("Red is a must!");
+    }
+  }
 }
 
 window.onload=()=>{
@@ -363,7 +437,7 @@ function strike(entity,velocity,angle){
   elements[entity].a=angle*(Math.PI/180);
   elements[entity].v=velocity;
   elements[entity].d=elements[entity].v/100;
-  
+  turnMoved=false;
 }
 
 function update(timestamp){
@@ -375,14 +449,104 @@ function update(timestamp){
 }
 
 function updateEverything(timestamp){
+  
+  
+  checkStrikerMovement();
   Object.keys(elements).forEach(element=>{
     updateBall(element,timestamp);
     if(element!=="striker"){
       checkAllPockets(element);
     }
   });
+
+ 
+ // if(elements.striker.v==0 ){
+    checkIfAllStopped();
+    if(isAllstopped && !turnMoved){
+      console.log("...");
+      let newPiecesCount=countPieces();
+      if(hasToCover){
+        if(newPiecesCount[turn]== piecesCount[turn] ){
+          let red=document.createElement("div");
+          red.classList.add("piece");
+          red.classList.add("ball");
+          red.classList.add("red");
+          world.appendChild(red);
+          elements.red={
+            element:red,
+            m:250,
+            x:160,
+            y:180,
+            v:0,
+            vx:0,
+            vy:0,
+            a:0,
+            r:9,
+            color:colors[2],
+            hittingwall:false,
+            lastTime:0,
+            get d(){
+              return friction/this.m;
+            },
+            storedVelocity:0,
+            loopId:null,
+            get maxX(){
+              return (world.clientWidth - this.element.offsetWidth);
+            },
+            get maxY(){
+              return (world.clientHeight - this.element.offsetHeight);
+            }
+          }
+        }
+          hasToCover=false;
+      }
+      if(newPiecesCount[turn]== piecesCount[turn] && newPiecesCount[2]==piecesCount[2]){
+        
+        if(turn==0){
+          turn=1;
+          other=0;
+        }else if(turn==1){
+          turn=0;
+          other=1;
+        }
+      }else{
+        
+        if(newPiecesCount[2]<piecesCount[2]){
+          hasToCover=true;
+        }
+        
+      }
+      piecesCount=countPieces();
+      checkWin();
+      if(!turnMoved){
+        console.log(turnMoved);
+      }
+      setStriker(turn);
+      turnMoved=true;
+    }
+    
+    //console.log(isAllstopped,turnMoved);
+    
+    
+  //}
 }
 
+function checkStrikerMovement(){
+  if(elements.striker.v!=0){
+    isStrikerMoving=true;
+  }
+  
+  if(isStrikerMoving && elements.striker.v==0 &&(elements.striker.y==43 || elements.striker.y==277)){
+    setTimeout(()=>{
+      isStrikerMoving=false;
+      document.querySelector(`.slider${turn}`).style.opacity=1;
+      document.querySelector(`.slider${turn} .circle`).style.left="50%";
+      document.querySelector(`.slider${other}`).style.opacity=0;
+    },500);
+    
+  }
+  
+}
 
 function updateBall(entity,timestamp){
   if(!elements[entity]){
@@ -397,13 +561,17 @@ function updateBall(entity,timestamp){
   elements[entity].x+=elements[entity].vx*t;
 
   elements[entity].y+=elements[entity].vy*t;
-  elements[entity].v-=elements[entity].d*t;
+  
+  if(elements[entity].v>0){
+    elements[entity].v-=elements[entity].d*t;
+  }
   if(elements[entity].v<0){
     elements[entity].v=0;
   }
   
   elements[entity].lastTime=timestamp;
   setPos(entity,elements[entity].x,elements[entity].y);
+  //elements.striker.x=40;
   boundBall(entity);
 }
 
@@ -458,7 +626,7 @@ function ommitDots(){
 function start(){
   let striker=elements.striker.element;
   striker.ontouchstart=(event)=>{
-    if(elements.striker.v!=0) return;
+    //if(elements.striker.v!=0) return;
     let touch=event.touches[0];
     touchStart.x=touch.clientX;
     touchStart.y=touch.clientY;
@@ -466,7 +634,7 @@ function start(){
   }
   
   striker.ontouchend=(event)=>{
-    if(elements.striker.v!=0) return;
+    if(isStrikerMoving) return;
     let touch=event.changedTouches[0];
     touchEnd.x=touch.pageX;
     touchEnd.y=touch.pageY;
@@ -475,6 +643,7 @@ function start(){
   }
   
   striker.ontouchmove=(event)=>{
+    if(isStrikerMoving) return;
     ommitDots();
     if(elements.striker.v!=0) return;
     let x=event.touches[0].clientX;
@@ -514,6 +683,7 @@ function start(){
       }
     
   }
+  setStriker(turn);
 }
 
 function calculateTouch(){
@@ -648,7 +818,7 @@ function pocketCheck(entity,p){
   }
   let piece=elements[entity];
   if(p===0){
-    if(piece.x<(pocketCorners[p].x-1.2*piece.r) && piece.y>(pocketCorners[p].y-.8*piece.r)){
+    if(piece.x<(pocketCorners[p].x-1.7*piece.r) && piece.y>(pocketCorners[p].y-.3*piece.r)){
       return true;
     }else{
       
@@ -657,7 +827,7 @@ function pocketCheck(entity,p){
   }
   if(p===1){
     
-    if(piece.x>(pocketCorners[p].x-.8*piece.r) && piece.y>(pocketCorners[p].y-.8*piece.r)){
+    if(piece.x>(pocketCorners[p].x-.3*piece.r) && piece.y>(pocketCorners[p].y-.3*piece.r)){
       return true;
     }else{
       
@@ -665,7 +835,7 @@ function pocketCheck(entity,p){
     }
   }
   if(p===2){
-    if(piece.x<(pocketCorners[p].x-1.2*piece.r) && piece.y<(pocketCorners[p].y-1.2*piece.r)){
+    if(piece.x<(pocketCorners[p].x-1.7*piece.r) && piece.y<(pocketCorners[p].y-1.7*piece.r)){
       return true;
     }else{
       
@@ -673,7 +843,7 @@ function pocketCheck(entity,p){
     }
   }
   if(p===3){
-    if(piece.x>(pocketCorners[p].x-.8*piece.r) && piece.y<(pocketCorners[p].y-1.2*piece.r)){
+    if(piece.x>(pocketCorners[p].x-.3*piece.r) && piece.y<(pocketCorners[p].y-1.7*piece.r)){
       return true;
     }else{
       
@@ -697,18 +867,24 @@ function checkAllPockets(entity){
       setTimeout(()=>{
         pocket.childNodes[1].style.display="none";
         pocket.childNodes[1].style.opacity=1;
-      },10);
-     },800);
-    elements[entity]=null;
+        pocket.childNodes[1].style.height="16px";
+        pocket.childNodes[1].style.width="16px";
+      },50);
+     },3000);
+    delete elements[entity];
   }
   if(pocketCheck(entity,1)){
     if(elements[entity].v==0) return;
     let pocket= document.querySelector(`.p1`);
     setTimeout(()=>{
-      world.removeChild(elements[entity].element);
-      pocket.childNodes[1].style.background=elements[entity].color;
+      if(elements[entity]){
+        world.removeChild(elements[entity].element);
+      }
+      if(elements[entity]){
+        pocket.childNodes[1].style.background=elements[entity].color;
+        }
       pocket. childNodes[1].style.display="block";
-      elements[entity]=null;
+      delete elements[entity];
     },50);
     setTimeout(()=>{
       pocket.childNodes[1].style.display="none";
@@ -716,8 +892,10 @@ function checkAllPockets(entity){
       setTimeout(()=>{
         pocket.childNodes[1].style.display="none";
         pocket.childNodes[1].style.opacity=1;
-      },10);
-     },800)
+        pocket.childNodes[1].style.height="16px";
+        pocket.childNodes[1].style.width="16px";
+      },50);
+     },3000)
     
   }
   if(pocketCheck(entity,2)){
@@ -731,9 +909,11 @@ function checkAllPockets(entity){
       setTimeout(()=>{
         pocket.childNodes[1].style.display="none";
         pocket.childNodes[1].style.opacity=1;
-      },10);
-     },800)
-    elements[entity]=null;
+        pocket.childNodes[1].style.height="16px";
+        pocket.childNodes[1].style.width="16px";
+      },50);
+     },3000)
+    delete elements[entity];
   }
   if(pocketCheck(entity,3)){
     if(elements[entity].v==0) return;
@@ -746,8 +926,33 @@ function checkAllPockets(entity){
       setTimeout(()=>{
         pocket.childNodes[1].style.display="none";
         pocket.childNodes[1].style.opacity=1;
-      },10);
-     },800);
-    elements[entity]=null;
+        pocket.childNodes[1].style.height="16px";
+        pocket.childNodes[1].style.width="16px";
+      },50);
+     },3000);
+    delete elements[entity];
   }
 }
+
+document.querySelectorAll(".slider").forEach(slider=>{
+  slider.ontouchmove=(event)=>{
+    let circle=slider.childNodes[1];
+    let x=event.touches[0].clientX-50;
+    let minX=8.5;
+    let maxX=220;
+    let offset=50;
+    if(x>minX && x<maxX){
+      circle.style.left=x+"px";
+      setPos("striker",x+offset,elements.striker.y);
+      //elements.striker.v=.0007;
+      
+    }
+  }
+});
+
+
+/*document.querySelectorAll(".slider").forEach(slider=>{
+  slider.ontouchstart=(event)=>{
+    isAllstopped=false;
+  }
+})*/
